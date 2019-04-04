@@ -61,10 +61,30 @@ public class Main {
         try {
             Scanner scanner = new Scanner(new File("tree.txt"));
 
-            for (int i = 0; i < 4; i++) {
-                scanner.nextLine();
-            }
 
+            while (scanner.hasNext()) {
+
+                for (int i = 0; i < 4; i++) {
+                    scanner.nextLine();
+                }
+
+                while (!((scanner.nextLine()).trim().equals(""))) {
+                    String permission = null;
+
+                    if ((scanner.nextLine()).startsWith("l") || (scanner.nextLine()).startsWith("c") || (scanner.nextLine()).startsWith("b") || (scanner.nextLine()).startsWith("s")) {
+                        scanner.nextLine();
+                    }
+                    if ((scanner.nextLine()).startsWith("d")) {
+                        permission = scanner.next();
+
+                    }
+                    if ((scanner.nextLine()).startsWith("-")) {
+
+                    } else {
+                        scanner.nextLine();
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace(System.err);
         }
