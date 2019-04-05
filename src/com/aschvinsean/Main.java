@@ -2,8 +2,8 @@ package com.aschvinsean;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.*;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class Main {
@@ -24,7 +24,7 @@ public class Main {
             sqlQuery = "CREATE TABLE IF NOT EXISTS directory(" +
                     "directory_ID INT NOT NULL UNIQUE AUTO_INCREMENT," +
                     "permission VARCHAR(15) NOT NULL," +
-                    "number BIGINT NOT NULL," +
+                    "number INT NOT NULL," +
                     "owner VARCHAR(50) NOT NULL," +
                     "ownergroup VARCHAR(50) NOT NULL," +
                     "size BIGINT NOT NULL," +
@@ -37,19 +37,27 @@ public class Main {
             sqlQuery = "CREATE TABLE IF NOT EXISTS file(" +
                     "file_ID INT NOT NULL UNIQUE AUTO_INCREMENT," +
                     "permission VARCHAR(15) NOT NULL," +
-                    "number BIGINT NOT NULL," +
+                    "number INT NOT NULL," +
                     "owner VARCHAR(50) NOT NULL," +
                     "ownergroup VARCHAR(50) NOT NULL," +
                     "size BIGINT NOT NULL," +
                     "date VARCHAR(15) NOT NULL," +
-                    "name varchar(255) NOT NULL," +
-                    "ID_directory INT," +
+                    "name VARCHAR (255) NOT NULL," +
+                    "ID_directory INT ," +
                     "PRIMARY KEY (file_ID)" +
-                    //     "FOREIGN KEY (ID_directory) REFERENCES directory(directory_ID) ON UPDATE CASCADE ON DELETE CASCADE" +
+                    "FOREIGN KEY (ID_directory) REFERENCES directory(name) ON UPDATE CASCADE ON DELETE CASCADE" +
                     ")";
             stmt.executeQuery(sqlQuery);
 
             Scanner scanner = new Scanner(new File("tree.txt"));
+            String permission;
+            int number;
+            String owner;
+            String ownergroup;
+            BigDecimal size;
+            String date;
+            String name;
+            int x = 0;
 
             while (scanner.hasNext()) {
 
@@ -57,59 +65,58 @@ public class Main {
                     scanner.nextLine();
                 }
 
-                String permission = scanner.next();
-                while (!(permission.startsWith("."))) {
-                    BigDecimal number = new BigDecimal("0");
-                    String owner = null;
-                    String ownergroup = null;
-                    BigDecimal size = new BigDecimal("0");
-                    String date = null;
-                    String name = null;
+                try {
+                    permission = scanner.next();
+                    while (!(permission.startsWith("."))) {
 
-                    if (permission.startsWith("l")) {
-                        scanner.nextLine();
-                        permission = scanner.next();
-                        continue;
-                    }
-
-                    if ((permission.startsWith("d")) || (permission.startsWith("-"))) {
-                        number = scanner.nextBigDecimal();
-                        owner = scanner.next();
-                        ownergroup = scanner.next();
-                        size = scanner.nextBigDecimal();
-                        date = scanner.next() + " " + scanner.next() + " " + scanner.next();
-                        name = scanner.next();
-
-                        String table = null;
-                        if (permission.startsWith("d")) {
-                            table = "directory";
-                        }
-                        if (permission.startsWith("-")) {
-                            table = "file";
+                        if (permission.startsWith("l")) {
+                            scanner.nextLine();
+                            permission = scanner.next();
+                            continue;
                         }
 
-                        sqlQuery = "INSERT INTO " + table + "(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES (?,?,?,?,?,?,?) ";
+                        if ((permission.startsWith("d")) || (permission.startsWith("-"))) {
+                            number = scanner.nextInt();
+                            owner = (scanner.next()).trim();
+                            ownergroup = (scanner.next()).trim();
+                            size = scanner.nextBigDecimal();
+                            date = (scanner.next() + " " + scanner.next() + " " + scanner.next()).trim();
+                            name = (scanner.next()).trim();
 
-                        PreparedStatement preparedStmt = con.prepareStatement(sqlQuery);
-                        preparedStmt.setString(1, permission);
-                        preparedStmt.setBigDecimal(2, number);
-                        preparedStmt.setString(3, owner);
-                        preparedStmt.setString(4, ownergroup);
-                        preparedStmt.setBigDecimal(5, size);
-                        preparedStmt.setString(6, date);
-                        preparedStmt.setString(7, name);
-                        preparedStmt.execute();
+                            String table = null;
+                            if (permission.startsWith("d")) {
+                                table = "directory";
+                            }
+                            if (permission.startsWith("-")) {
+                                table = "file";
+                            }
 
-                        scanner.nextLine();
-                        permission = scanner.next();
-                        continue;
+                            sqlQuery = "INSERT INTO " + table + "(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES (?,?,?,?,?,?,?) ";
 
-                    } else {
-                        scanner.nextLine();
-                        permission = scanner.next();
-                        continue;
+                            PreparedStatement preparedStmt = con.prepareStatement(sqlQuery);
+                            preparedStmt.setString(1, permission);
+                            preparedStmt.setInt(2, number);
+                            preparedStmt.setString(3, owner);
+                            preparedStmt.setString(4, ownergroup);
+                            preparedStmt.setBigDecimal(5, size);
+                            preparedStmt.setString(6, date);
+                            preparedStmt.setString(7, name);
+                            preparedStmt.execute();
+
+                            scanner.nextLine();
+                            permission = scanner.next();
+                            continue;
+
+                        } else {
+                            scanner.nextLine();
+                            permission = scanner.next();
+                            continue;
+                        }
                     }
+                } catch (NoSuchElementException e) {
+                    System.out.println("Done");
                 }
+
             }
         } catch (Exception e) {
             e.printStackTrace(System.err);
