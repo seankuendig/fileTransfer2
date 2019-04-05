@@ -3,15 +3,19 @@ package com.aschvinsean;
 import java.io.File;
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
-import java.util.Queue;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
+        double time = System.currentTimeMillis();
         Connection con = null;
+        StringBuilder insertSqlDir = new StringBuilder("INSERT INTO directory(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES");
+        StringBuilder insertSqlFile = new StringBuilder("INSERT INTO file(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`, `path`) VALUES");
+
+        ArrayList<Object> parametersDir = new ArrayList<>();
+        ArrayList<Object> parametersFile = new ArrayList<>();
+
         try {
             // get a connection to database
             con = DriverManager.getConnection(
@@ -61,7 +65,6 @@ public class Main {
             BigDecimal size;
             String date;
             String name;
-            PreparedStatement preparedStmt = null;
 
             String path = "/";
 
@@ -71,23 +74,20 @@ public class Main {
 
             permission = scanner.next();
             number = scanner.nextInt();
-            owner = (scanner.next()).trim();
-            ownergroup = (scanner.next()).trim();
+            owner = scanner.next();
+            ownergroup = scanner.next();
             size = scanner.nextBigDecimal();
             date = (scanner.next() + " " + scanner.next() + " " + scanner.next()).trim();
-            name = (scanner.next()).trim();
+            name = scanner.next();
 
-            sqlQuery = "INSERT INTO directory(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES (?,?,?,?,?,?,?) ";
-            preparedStmt = con.prepareStatement(sqlQuery);
-            preparedStmt.setString(1, permission);
-            preparedStmt.setInt(2, number);
-            preparedStmt.setString(3, owner);
-            preparedStmt.setString(4, ownergroup);
-            preparedStmt.setBigDecimal(5, size);
-            preparedStmt.setString(6, date);
-            preparedStmt.setString(7, path);
-            System.out.println(preparedStmt.getParameterMetaData().);
-            preparedStmt.execute();
+            parametersDir.add(permission);
+            parametersDir.add(number);
+            parametersDir.add(owner);
+            parametersDir.add(ownergroup);
+            parametersDir.add(size);
+            parametersDir.add(date);
+            parametersDir.add(path);
+            insertSqlDir.append(" (?,?,?,?,?,?,?),");
 
             for (int i = 0; i < 2; i++) {
                 scanner.nextLine();
@@ -114,35 +114,33 @@ public class Main {
                             date = (scanner.next() + " " + scanner.next() + " " + scanner.next()).trim();
                             name = (scanner.nextLine()).trim();
 
-                            String table;
                             if (permission.startsWith("d")) {
-                                table = "directory";
-
-                                sqlQuery = "INSERT INTO " + table + "(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES (?,?,?,?,?,?,?) ";
-                                preparedStmt = con.prepareStatement(sqlQuery);
+                                parametersDir.add(permission.replace(".", ""));
+                                parametersDir.add(number);
+                                parametersDir.add(owner);
+                                parametersDir.add(ownergroup);
+                                parametersDir.add(size);
+                                parametersDir.add(date);
                                 if (path.equals("/")) {
-                                    preparedStmt.setString(7, path + name);
+                                    parametersDir.add(path + name);
                                 } else {
-                                    preparedStmt.setString(7, path + "/" + name);
-
+                                    parametersDir.add(path + "/" + name);
                                 }
-
+                                insertSqlDir.append(" (?,?,?,?,?,?,?),");
                             }
+
                             if (permission.startsWith("-")) {
-                                table = "file";
-                                sqlQuery = "INSERT INTO " + table + "(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`, `path`) VALUES (?,?,?,?,?,?,?,?) ";
-                                preparedStmt = con.prepareStatement(sqlQuery);
-                                preparedStmt.setString(8, path);
-                                preparedStmt.setString(7, name);
+                                parametersFile.add(permission.replace(".", ""));
+                                parametersFile.add(number);
+                                parametersFile.add(owner);
+                                parametersFile.add(ownergroup);
+                                parametersFile.add(size);
+                                parametersFile.add(date);
+                                parametersFile.add(name);
+                                parametersFile.add(path);
+                                insertSqlFile.append(" (?,?,?,?,?,?,?,?),");
                             }
 
-                            preparedStmt.setString(1, permission);
-                            preparedStmt.setInt(2, number);
-                            preparedStmt.setString(3, owner);
-                            preparedStmt.setString(4, ownergroup);
-                            preparedStmt.setBigDecimal(5, size);
-                            preparedStmt.setString(6, date);
-                            preparedStmt.execute();
 
                             permission = scanner.next();
                             continue;
@@ -154,11 +152,10 @@ public class Main {
                         }
                     } else {
                         path = permission.substring(1);
-                        path+= scanner.nextLine();
+                        path += scanner.nextLine();
 
-                        path = path.substring(0, path.length()-1);
+                        path = path.substring(0, path.length() - 1);
 
-                        System.out.println(path);
 
                         for (int i = 0; i < 3; i++) {
                             scanner.nextLine();
@@ -168,12 +165,26 @@ public class Main {
                         permission = scanner.next();
                     }
                 } catch (NoSuchElementException e) {
-                    System.out.println("Done");
+                    System.out.println((System.currentTimeMillis() - time) / 1000);
+
+                    insertSqlDir.setLength(insertSqlDir.length() - 1);
+                    PreparedStatement pstmt = con.prepareStatement(insertSqlDir.toString());
+                    for (int i = 1; i <= parametersDir.size(); i++) {
+                        pstmt.setObject(i, parametersDir.get(i - 1));
+                    }
+                    pstmt.execute();
+
+                    insertSqlFile.setLength(insertSqlFile.length() - 1);
+                    pstmt = con.prepareStatement(insertSqlFile.toString());
+                    for (int i = 1; i <= parametersFile.size(); i++) {
+                        pstmt.setObject(i, parametersFile.get(i - 1));
+                    }
+                    pstmt.execute();
                 }
 
             }
         } catch (Exception e) {
-            e.printStackTrace(System.err);
+            System.out.println(e);
         } finally {
             if (con != null) {
                 try {
@@ -183,5 +194,8 @@ public class Main {
                 con = null;
             }
         }
+        System.out.println((System.currentTimeMillis() - time) / 1000);
     }
+
+
 }
