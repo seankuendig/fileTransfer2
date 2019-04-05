@@ -13,8 +13,8 @@ public class Main {
         StringBuilder insertSqlDir = new StringBuilder("INSERT INTO directory(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`) VALUES");
         StringBuilder insertSqlFile = new StringBuilder("INSERT INTO file(`permission`, `number`, `owner`, `ownergroup`, `size`, `date`, `name`, `path`) VALUES");
 
-        ArrayList<Object> parametersDir = new ArrayList<>();
-        ArrayList<Object> parametersFile = new ArrayList<>();
+        ArrayList<Object> parametersDir = new ArrayList<>(15000);
+        ArrayList<Object> parametersFile = new ArrayList<>(105000);
 
         try {
             // get a connection to database
